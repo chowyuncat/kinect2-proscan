@@ -47,14 +47,11 @@ from bvt_python import *
 # prepare_all_bvt_packages()
 
 s = Sonar()
-filename = r"F:\Temp\GAVIA Plane\file_2014-12-19_10_35_56.723.son"
-
-f = open(filename, 'r', 0)
-f.close()
-
-
 # filename = r"D:\Sonar Output\Pipeline Downward Pointing\file_2014-03-22_21_25_59.595 Sandy Bottom.son"
 # filename = r"Z:\Engineering\Projects\Current\OEM\XXXX_Gavia_MB2250-W-DL\Test Data\Boat Test\Blueview\141219_Blueview_Run\files\file_2014-12-19_10_35_56.723.son"
+# filename = r"F:\Temp\GAVIA Plane\file_2014-12-19_10_35_56.723.son"
+filename = r"/Users/catz/devel/blueview/SonarOutput/GAVIA Plane/asyncnav-file_2014-12-19_10_35_56.723.son"
+
 s.open("FILE", filename)
 
 h = s.get_head(0)
@@ -62,56 +59,55 @@ h = s.get_head(0)
 last_unique_timestamp = None
 pings_with_unique_timestamps = []
 
-def benchmark_entire_son_file(function):
-    print "Benchmarking with function: %s" % repr(function)
+def benchmark_entire_son_file(get_function, get_count):
+    print "Benchmarking with function: %s" % repr(get_function)
+    print "There will be %d calls to %s" % (get_count, get_function)
+
     begin = timeit.default_timer()
     index_win = -1
     begin_win = begin
-    ping_count = h.ping_count
 
-    for index in xrange(ping_count):
+    for index in xrange(get_count):
         # p = h.get_ping_metadata(index)
-        p = function(h, index)
+        p = get_function(h, index)
         # if p.nav_data_copy.nav_time != last_unique_timestamp:
         #     last_unique_timestamp = p.nav_data_copy.nav_time
         #     pings_with_unique_timestamps.append((index, last_unique_timestamp))
         #     print "Ping %d has unique timestamp %f" % (index, last_unique_timestamp)
-        if (index % 1000) == 0:
+        if (index % 10000) == 0:
             now = timeit.default_timer()
-            print "index %d / %d " % (index, ping_count)
-            pps = (index + 1)  / (now - begin) 
-            pps_win = (index - index_win) / (now - begin_win) 
+            print "index %d / %d " % (index, get_count)
+            pps = (index + 1)  / (now - begin)
+            pps_win = (index - index_win) / (now - begin_win)
             print "pings / sec all: %.3f" % pps
             print "pings / sec win: %.3f" % pps_win
             index_win = index
             begin_win = now
             print "lat: %f" % p.nav_data_copy.latitude
-
+    print "Total elapsed: %f" % (timeit.default_timer() - begin)
 
 def benchmark_entire_son_file2(get_object, get_function, count):
     print "Benchmarking with function: %s" % repr(get_function)
+    print "There will be %d calls to %s" % (count, get_function)
     begin = timeit.default_timer()
     index_win = -1
     begin_win = begin
 
     for index in xrange(count):
         p = get_function(get_object, index)
-        # if p.nav_data_copy.nav_time != last_unique_timestamp:
-        #     last_unique_timestamp = p.nav_data_copy.nav_time
-        #     pings_with_unique_timestamps.append((index, last_unique_timestamp))
-        #     print "Ping %d has unique timestamp %f" % (index, last_unique_timestamp)
-        if (index % 1000) == 0:
+        if (index % 10000) == 0:
             now = timeit.default_timer()
             print "index %d / %d " % (index, count)
-            pps = (index + 1)  / (now - begin) 
-            pps_win = (index - index_win) / (now - begin_win) 
+            pps = (index + 1)  / (now - begin)
+            pps_win = (index - index_win) / (now - begin_win)
             print "pings / sec all: %.3f" % pps
             print "pings / sec win: %.3f" % pps_win
             index_win = index
             begin_win = now
-            print "lat: %f" % p.nav_data_copy.latitude
+            print "lat: %f" % p.latitude
+    print "Total elapsed: %f" % (timeit.default_timer() - begin)
 
 
-# benchmark_entire_son_file(Head.get_ping)
-# benchmark_entire_son_file(Head.get_ping_metadata_only)
+# benchmark_entire_son_file(Head.get_ping, h.ping_count)
+# benchmark_entire_son_file(Head.get_ping_metadata_only, h.ping_count)
 benchmark_entire_son_file2(s, Sonar.get_nav_data_copy, s.nav_data_count)
